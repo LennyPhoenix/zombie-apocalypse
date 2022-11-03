@@ -1,5 +1,8 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
 pub struct Time {
     hour: i32,
     day: i32,
@@ -18,8 +21,8 @@ impl Display for Time {
 }
 
 impl Time {
-    pub fn first_morning() -> Self {
-        Self { hour: 7, day: 0 }
+    pub fn day_zero() -> Self {
+        Self { hour: 10, day: 0 }
     }
 
     pub fn advance(&mut self, time: i32) {

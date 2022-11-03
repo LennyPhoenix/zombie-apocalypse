@@ -1,15 +1,19 @@
 use std::fmt::Display;
 use std::fmt::Write;
 
-use rand::{seq::IteratorRandom, thread_rng, Rng};
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use rand::{thread_rng, Rng};
+use serde::Deserialize;
+use serde::Serialize;
 
+use crate::tile::Tile;
+
+#[derive(Serialize, Deserialize)]
 pub struct Position {
     x: i32,
     y: i32,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Map {
     position: Position,
     width: i32,
@@ -52,10 +56,6 @@ impl Map {
         map.check_surroundings();
 
         map
-    }
-
-    pub fn get_pos(&self) -> &Position {
-        &self.position
     }
 
     pub fn explore(&mut self) {
@@ -126,6 +126,7 @@ impl Display for Map {
 
         let mut output = String::new();
         for (y, row) in self.rows.iter().enumerate() {
+            write!(output, " ")?;
             for (x, tile) in row.iter().enumerate() {
                 if x as i32 != self.position.x || y as i32 != self.position.y {
                     write!(output, "{tile}")?;
@@ -140,63 +141,5 @@ impl Display for Map {
         }
 
         write!(f, "{}", output)
-    }
-}
-
-#[derive(EnumIter)]
-pub enum Location {
-    ShoppingCentre,
-    TradeWell,
-    MilitaryBase,
-    Desert,
-}
-
-pub struct Tile {
-    explored: bool,
-    seen: bool,
-    location_type: Option<Location>,
-}
-
-impl Tile {
-    fn random() -> Self {
-        let mut rng = thread_rng();
-
-        let loc_type;
-
-        if rng.gen_bool(0.15) {
-            loc_type = Location::iter().choose(&mut rng);
-        } else {
-            loc_type = None;
-        }
-
-        Self {
-            explored: false,
-            seen: false,
-            location_type: loc_type,
-        }
-    }
-}
-
-impl Display for Tile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let char;
-        if self.seen {
-            if let Some(_) = &self.location_type {
-                if self.explored {
-                    char = 'X';
-                } else {
-                    char = '?';
-                }
-            } else {
-                if self.explored {
-                    char = '#';
-                } else {
-                    char = '.';
-                }
-            }
-        } else {
-            char = ' ';
-        }
-        write!(f, "{}", char)
     }
 }

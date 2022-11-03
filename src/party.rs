@@ -1,21 +1,22 @@
 use rand::{seq::SliceRandom, thread_rng, Rng};
+use serde::{Deserialize, Serialize};
 use std::{
     cmp::{max, min},
     fmt::Display,
-    io::Write,
 };
 
 use crate::{
     event::{Event, DEFAULT_DAY_OPTIONS, DEFAULT_NIGHT_OPTIONS},
-    lib::{clear, ellipsis, flush, pause, wait},
+    io::{clear, ellipsis, flush, pause, read_line, wait},
     map::{Direction, Map},
-    member::{DeathCheckResult, Member, NAME_POOL},
+    member::{DeathCheckResult, Member, NamePool},
     time::Time,
 };
 
 const TRAVEL_COST: i32 = 1;
 const TRAVEL_TIME: i32 = 6;
 
+#[derive(Serialize, Deserialize)]
 pub struct Party {
     pub ammo: i32,
     pub money: i32,
@@ -44,17 +45,38 @@ impl Party {
         let member_1 = Party::choose_character();
         let member_2 = Member::scoob();
 
-        Self {
+        print!(
+            "{name} is able to locate the mystery machine",
+            name = member_1.name
+        );
+        ellipsis();
+        println!("\n{name} is still inside.", name = member_2.name);
+
+        let party = Self {
             ammo,
             money,
-            food: 2,
+            food: 4,
             medicine: 0,
             fuel: 2,
             members: vec![member_1, member_2],
+        };
+
+        for member in party.members.iter() {
+            println!("{}\n", member);
         }
+        wait();
+
+        party
     }
 
-    pub fn attack(&mut self, mut zombie_count: i32) {
+    pub fn normalise_values(&mut self) {
+        self.food = max(0, self.food);
+        self.ammo = max(0, self.ammo);
+        self.medicine = max(0, self.medicine);
+        self.money = max(0, self.money);
+    }
+
+    pub fn combat(&mut self, mut zombie_count: i32) {
         let mut rng = thread_rng();
         // Shuffle Member List
         self.members.shuffle(&mut rng);
@@ -140,19 +162,18 @@ impl Party {
 
             pause();
 
-            if self.check_failure() {
-                return println!("As the last member collapses to the ground, the surrounding area grows quiet once again...");
-            }
-
-            pause();
-
             if zombie_count > 1 {
                 println!("There are now {} zombies left...", zombie_count);
             } else if zombie_count == 1 {
                 println!("1 zombie remains...");
             }
-
             wait();
+        }
+
+        if !self.check_failure() {
+            println!("The attackers have been defeated...");
+        } else {
+            return;
         }
     }
 
@@ -160,17 +181,56 @@ impl Party {
         loop {
             println!("Please choose a character by selecting their number: ");
             println!("(1) Velma");
+            println!("(2) Shaggy");
+            println!("(3) Fred");
+            println!("(4) Daphne");
             print!(": ");
             flush();
 
-            let mut input = String::new();
-            let stdin = std::io::stdin();
-            stdin.read_line(&mut input).unwrap();
+            let input = read_line();
 
             match input.trim() {
                 "1" => return Member::velma(),
+                "2" => return Member::shaggy(),
+                "3" => return Member::fred(),
+                "4" => return Member::daphne(),
                 _ => println!("Invalid option."),
             }
+        }
+    }
+
+    pub fn check_infection(&mut self) {
+        let mut zombies = 0;
+        for _ in 0..self.members.len() {
+            let mut member = self.members.pop().expect("members to be non-empty");
+            match member.check_infection() {
+                DeathCheckResult::Alive => self.members.insert(0, member),
+                DeathCheckResult::Dead => {
+                    print!("{} collapses on the ground, unmoving", member.name);
+                    ellipsis();
+                    println!("");
+                }
+                DeathCheckResult::Undead => {
+                    zombies += 1;
+                    print!(
+                        "{} falls on the ground, and continues coughing",
+                        member.name
+                    );
+                    ellipsis();
+                    println!("");
+                }
+            }
+        }
+        if zombies > 0 {
+            if zombies > 1 {
+                println!("Suddenly, the {zombies} corpses leap from the ground and attack the rest of the party!");
+            } else {
+                println!(
+                    "Suddenly, the corpse leaps from the ground and attacks the rest of the party!"
+                );
+            }
+            pause();
+            self.combat(zombies);
         }
     }
 
@@ -178,7 +238,7 @@ impl Party {
         self.members.len() == 0
     }
 
-    pub fn display_options(&mut self, time: &mut Time, map: &mut Map) {
+    pub fn display_options(&mut self, time: &mut Time, map: &mut Map, name_pool: &mut NamePool) {
         clear();
         println!("{time}");
         println!("Party:\n{self}\n- Members: {}", self.members.len());
@@ -204,7 +264,7 @@ impl Party {
                     self.display_party_members();
                 }
                 "2" => self.show_map(time, map),
-                "3" => self.search(time, map),
+                "3" => self.search(time, map, name_pool),
                 "4" => self.feed_party_members(),
                 "5" => self.cure_party_members(),
                 _ => {
@@ -256,7 +316,6 @@ impl Party {
                 }
             } else {
                 println!("You do not have enough fuel to travel.");
-                println!("Press enter to return...");
                 wait();
                 return;
             }
@@ -368,156 +427,45 @@ impl Party {
         }
     }
 
-    fn display_party_members(&mut self) {
+    fn display_party_members(&self) {
         clear();
         for member in self.members.iter() {
             println!("{}\n", member);
         }
-        println!("Enter to return...");
         wait();
     }
 
-    fn search(&mut self, time: &mut Time, map: &mut Map) {
-        let mut rng = thread_rng();
-        print!("You spend the next 3 hours searching the area");
-        ellipsis();
-        for _ in 0..3 {
-            clear();
-            println!("{}", time);
-            println!("Party:\n{}\n- Members: {}\n", self, self.members.len());
+    fn search(&mut self, time: &mut Time, map: &mut Map, name_pool: &mut NamePool) {
+        let tile = map.get_tile(None);
 
-            let options = if time.night() {
-                DEFAULT_NIGHT_OPTIONS
-            } else {
-                DEFAULT_DAY_OPTIONS
-            };
+        clear();
+        println!("{}", time);
+        println!("Party:\n{}\n- Members: {}\n", self, self.members.len());
 
-            match Event::roll(options) {
-                Event::Money(n) => {
-                    print!("You stumble across a corpse. It looks safe to search");
-                    ellipsis();
-                    println!("\n+{} money", n);
-                    if rng.gen_bool(0.3) {
-                        pause();
-                        let mut member = self.members.pop().expect("members");
-                        member.infection_level += 10;
-                        println!(
-                            "{} feels a little dizzy after leaving the corpse...",
-                            member.name
-                        );
-                        self.members.insert(0, member);
-                    }
-                    self.money += n;
-                }
-                Event::Ammo(n) => {
-                    if n > 0 {
-                        println!("You manage to break into a park ranger's locker, but there are only a few shells.");
-                        pause();
-                        println!("Whoever was last here took as much as they could...");
-                        pause();
-                        println!("+{} ammo", n);
-                    } else if self.ammo > 0 {
-                        println!("You hear some rustling in some bushes dead ahead of you.");
-                        pause();
-                        print!("You fire your shotgun at it out of impluse");
-                        ellipsis();
-                        println!("\nIt was only a few rats.");
-                        pause();
-                        println!("{} ammo", n);
-                    } else {
-                        print!(
-                            "You hear some rustling in the bushes ahead of you. The dread sets in"
-                        );
-                        ellipsis();
-                        println!("");
-                    }
-                    self.ammo += n;
-                }
-                Event::Fuel(n) => {
-                    print!("You stumble across someone's derelect house. The owners are long gone");
-                    ellipsis();
-                    println!("\nThere is nothing here, save for a half-empty jerry can of petrol.");
-                    pause();
-                    println!("+{} fuel", n);
-                    self.fuel += n;
-                }
-                Event::Food(n) => {
-                    if n > 0 {
-                        print!(
-                            "You stumble across someone's derelect house. The owners are long gone"
-                        );
-                        ellipsis();
-                        println!("\nThere is still some old food in the fridge.");
-                        pause();
-                        println!("+{} food", n);
-                    } else if self.food > 0 {
-                        let n = max(n, -self.food);
-                        println!("While searching the area, some of your food spoils and is made inedible...");
-                        pause();
-                        println!("{} food", n);
-                    }
-                    self.food += n;
-                }
-                Event::Zombie(n) => {
-                    if n > 1 {
-                        println!("While searching you hear some groaning nearby, and turn around to see {} zombies lunge towards you!", n);
-                    } else {
-                        println!("While searching you hear some groaning nearby, and turn around to see a zombie lurching towards you!");
-                    }
-                    pause();
-                    self.attack(n);
-                    if !self.check_failure() {
-                        println!("The attackers have been defeated...");
-                    } else {
-                        return;
-                    }
-                }
-                Event::Survivor(n) => {
-                    print!(
-                        "In the distance, you spot a column of smoke. The party rushes towards it"
-                    );
-                    ellipsis();
-                    println!("");
-                    if n > 0 {
-                        if n == 1 {
-                            println!("There is a lone survivor waiting by a campfire, they happily join your party.");
-                        } else {
-                            println!("There are a group of survivors huddled by the campfire, they happily join your party.");
-                        }
-                        for _ in 0..n {
-                            wait();
-                            let member = Member::new(
-                                NAME_POOL.choose(&mut rng).expect("names available"),
-                                rng.gen_range(10..=25),
-                                rng.gen_range(0..=5),
-                                Some(rng.gen_range(8..=10)),
-                            );
-                            println!("You are joined by {}", member);
-                            self.members.insert(0, member);
-                        }
-                    } else {
-                        print!("You finally reach the campfire, but there is nothing here but a few corpses");
-                        ellipsis();
-                        println!("\nThe bodies are still warm.");
-                    }
-                }
-                Event::Nothing => {
-                    println!(
-                        "As you walk on, you realise you have lost track of the mystery machine."
-                    );
-                    pause();
-                    print!("You spend the next hour finding your place on the map");
-                    ellipsis();
-                    println!("");
-                }
+        match &tile.location_type {
+            // Special Location
+            Some(location) if !tile.explored => location.handle(self, name_pool),
+            // Normal Tile
+            _ => {
+                let options = if time.night() {
+                    DEFAULT_NIGHT_OPTIONS
+                } else {
+                    DEFAULT_DAY_OPTIONS
+                };
+
+                // TODO: Location specific options
+                Event::roll(options).handle(self, name_pool);
             }
-            self.food = max(0, self.food);
-            self.ammo = max(0, self.ammo);
-            self.medicine = max(0, self.medicine);
-            self.money = max(0, self.money);
-            time.advance(1);
+        }
+
+        self.normalise_values();
+        time.advance(1);
+
+        if !self.check_failure() {
+            self.check_infection();
             wait();
         }
+
         map.explore();
     }
 }
