@@ -34,11 +34,7 @@ pub const DEFAULT_DAY_OPTIONS: &[Event] = &[
 pub const DEFAULT_NIGHT_OPTIONS: &[Event] = &[
     Event::Zombie(5),
     Event::Zombie(5),
-    Event::Zombie(5),
-    Event::Zombie(5),
     Event::Nothing,
-    Event::Nothing,
-    Event::Fuel(1),
     Event::Fuel(1),
 ];
 
@@ -48,8 +44,7 @@ impl Event {
 
         let event = options
             .choose(&mut rng)
-            .expect("size of options to be greater than 0")
-            .clone();
+            .expect("size of options to be greater than 0");
 
         let sign = if rng.gen_bool(0.7) { 1 } else { -1 };
 
@@ -82,7 +77,7 @@ fn nothing() {
     pause();
     print!("You spend the next hour finding your place on the map, the situation slowly chipping away at your sanity");
     ellipsis();
-    println!("");
+    println!();
 }
 
 fn survivor(amount: i32, party: &mut Party, name_pool: &mut NamePool) {
@@ -90,7 +85,7 @@ fn survivor(amount: i32, party: &mut Party, name_pool: &mut NamePool) {
 
     print!("In the distance, you spot a column of smoke. The party rushes towards it");
     ellipsis();
-    println!("");
+    println!();
     if amount > 0 {
         if amount == 1 {
             println!(
@@ -164,7 +159,7 @@ fn ammo(amount: i32, party: &mut Party) {
     } else {
         print!("You hear some rustling in the bushes ahead of you. The dread sets in");
         ellipsis();
-        println!("");
+        println!();
     }
     party.ammo += amount;
 }

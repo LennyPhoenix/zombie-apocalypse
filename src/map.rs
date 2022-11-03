@@ -137,7 +137,7 @@ impl Display for Map {
             if y < KEY.len() {
                 write!(output, " | {}", KEY[y])?;
             }
-            write!(output, "\n")?;
+            writeln!(output)?;
         }
 
         write!(f, "{}", output)

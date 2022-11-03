@@ -59,7 +59,7 @@ fn military_base(party: &mut Party, name_pool: &mut NamePool) {
             "y" | "yes" => {
                 print!("You turn the key in the control panel");
                 ellipsis();
-                println!("");
+                println!();
                 if thread_rng().gen_bool(0.4) {
                     let num = thread_rng().gen_range(1..=2);
                     if num > 1 {
@@ -90,13 +90,13 @@ fn military_base(party: &mut Party, name_pool: &mut NamePool) {
 
                     print!("You trudge on, slightly on-edge after that encounter");
                     ellipsis();
-                    println!("");
+                    println!();
                 }
             }
             "n" | "no" => {
                 print!("You continue onwards, its not worth the risk");
                 ellipsis();
-                println!("");
+                println!();
             }
             _ => {
                 println!("Invalid input.");
@@ -113,6 +113,8 @@ fn military_base(party: &mut Party, name_pool: &mut NamePool) {
     let amount = thread_rng().gen_range(5..=9);
     println!("+{amount} ammo");
     party.ammo += amount;
+    wait();
+    println!("There is also a small box of unlabeled tablets.");
 }
 
 fn trade_well(party: &mut Party) {
@@ -163,7 +165,7 @@ fn trade_well(party: &mut Party) {
             ellipsis();
             print!("\nJust as you begin to think whoever is down there has just taken your money and left, the bucket begins rising back up again");
             ellipsis();
-            println!("");
+            println!();
             if is_medicine {
                 if amount > 1 {
                     println!("In the bucket, there are exactly {amount} loose antibiotic tablets, as expected.");
@@ -245,7 +247,7 @@ fn shopping_centre(party: &mut Party, name_pool: &mut NamePool) {
                 print!("You put a coin into the machine");
             }
             ellipsis();
-            println!("");
+            println!();
             let limit = thread_rng().gen_range(5..=7);
             let food_amount = min(limit, amount);
             let spent = min(limit + 1, amount);
@@ -295,7 +297,7 @@ fn shopping_centre(party: &mut Party, name_pool: &mut NamePool) {
             "y" | "yes" => {
                 print!("You rush towards the sound");
                 ellipsis();
-                println!("");
+                println!();
                 let mut zombies = thread_rng().gen_range(4..=6);
                 if thread_rng().gen_bool(0.5) {
                     println!(
@@ -338,5 +340,5 @@ fn shopping_centre(party: &mut Party, name_pool: &mut NamePool) {
 
     print!("You leave the shopping centre");
     ellipsis();
-    println!("");
+    println!();
 }

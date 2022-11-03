@@ -170,7 +170,7 @@ impl Member {
                 self.name
             );
             ellipsis();
-            println!("");
+            println!();
         }
         self.check_dead()
     }

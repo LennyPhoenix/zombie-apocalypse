@@ -21,7 +21,7 @@ pub fn wait() {
     stdout()
         .queue(Clear(ClearType::CurrentLine))
         .expect("line to be clearable");
-    println!("");
+    println!();
 }
 
 pub fn ellipsis() {
@@ -43,5 +43,5 @@ pub fn flush() {
 pub fn read_line() -> String {
     let mut input = String::new();
     stdin().read_line(&mut input).expect("valid input");
-    return input;
+    input
 }

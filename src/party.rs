@@ -121,7 +121,7 @@ impl Party {
                 print!("A zombie attacks {}", member.name);
             }
             ellipsis();
-            println!("");
+            println!();
 
             member.hurt(damage);
 
@@ -172,8 +172,6 @@ impl Party {
 
         if !self.check_failure() {
             println!("The attackers have been defeated...");
-        } else {
-            return;
         }
     }
 
@@ -208,7 +206,7 @@ impl Party {
                 DeathCheckResult::Dead => {
                     print!("{} collapses on the ground, unmoving", member.name);
                     ellipsis();
-                    println!("");
+                    println!();
                 }
                 DeathCheckResult::Undead => {
                     zombies += 1;
@@ -217,7 +215,7 @@ impl Party {
                         member.name
                     );
                     ellipsis();
-                    println!("");
+                    println!();
                 }
             }
         }
@@ -257,7 +255,7 @@ impl Party {
             let stdin = std::io::stdin();
             stdin.read_line(&mut input).expect("valid input");
 
-            println!("");
+            println!();
 
             match input.trim() {
                 "1" => {
@@ -311,7 +309,7 @@ impl Party {
                     print!("The party packs into the mystery machine, and you spend the next {TRAVEL_TIME} hours travelling");
                     ellipsis();
                     ellipsis();
-                    println!("");
+                    println!();
                     break;
                 }
             } else {
@@ -398,10 +396,7 @@ impl Party {
                     return;
                 }
 
-                let choice = match input.parse::<usize>() {
-                    Ok(choice) => choice,
-                    Err(_) => 0,
-                };
+                let choice = input.parse::<usize>().unwrap_or(0);
 
                 if choice > 0 && choice <= self.members.len() {
                     let member = self

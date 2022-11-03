@@ -34,18 +34,16 @@ impl Display for Tile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let char;
         if self.seen {
-            if let Some(_) = &self.location_type {
-                if self.explored {
-                    char = 'X';
-                } else {
-                    char = '?';
-                }
-            } else {
+            if let None = &self.location_type {
                 if self.explored {
                     char = '#';
                 } else {
                     char = '.';
                 }
+            } else if self.explored {
+                char = 'X';
+            } else {
+                char = '?';
             }
         } else {
             char = ' ';
