@@ -115,6 +115,11 @@ fn military_base(party: &mut Party, name_pool: &mut NamePool) {
     party.ammo += amount;
     wait();
     println!("There is also a small box of unlabeled tablets.");
+    let amount = thread_rng().gen_range(3..=6);
+    print!("You take them cautiously");
+    ellipsis();
+    println!("\n+{amount} medicine");
+    party.medicine += amount;
 }
 
 fn trade_well(party: &mut Party) {

@@ -247,9 +247,7 @@ impl Party {
             print!(": ");
             flush();
 
-            let mut input = String::new();
-            let stdin = std::io::stdin();
-            stdin.read_line(&mut input).expect("valid input");
+            let input = read_line();
 
             println!();
 
