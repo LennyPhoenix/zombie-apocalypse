@@ -64,14 +64,14 @@ impl NamePool {
 
     pub fn get(&mut self) -> String {
         self.available.shuffle(&mut thread_rng());
-        return match self.available.pop() {
+        match self.available.pop() {
             Some(name) => name,
             None => NamePool::new().get(),
-        };
+        }
     }
 }
 
-#[derive(PartialEq, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Member {
     pub name: String,
     pub hp: i32,

@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    event::{Event, DEFAULT_DAY_OPTIONS, DEFAULT_NIGHT_OPTIONS},
+    event::Event,
     io::{clear, ellipsis, flush, pause, read_line, wait},
     map::{Direction, Map},
     member::{DeathCheckResult, Member, NamePool},
@@ -104,9 +104,8 @@ impl Party {
         zombie_count -= used_ammo;
         self.ammo -= used_ammo;
 
-        wait();
-
-        while zombie_count > 0 && self.members.len() > 0 {
+        while zombie_count > 0 && !self.members.is_empty() {
+            wait();
             let mut member = self
                 .members
                 .pop()
@@ -162,16 +161,13 @@ impl Party {
 
             pause();
 
-            if zombie_count > 1 {
-                println!("There are now {} zombies left...", zombie_count);
-            } else if zombie_count == 1 {
-                println!("1 zombie remains...");
+            match zombie_count.cmp(&1) {
+                std::cmp::Ordering::Greater => {
+                    println!("There are now {} zombies left...", zombie_count)
+                }
+                std::cmp::Ordering::Equal => println!("1 zombie remains..."),
+                std::cmp::Ordering::Less => println!("The attackers have been defeated..."),
             }
-            wait();
-        }
-
-        if !self.check_failure() {
-            println!("The attackers have been defeated...");
         }
     }
 
@@ -233,7 +229,7 @@ impl Party {
     }
 
     pub fn check_failure(&self) -> bool {
-        self.members.len() == 0
+        self.members.is_empty()
     }
 
     pub fn display_options(&mut self, time: &mut Time, map: &mut Map, name_pool: &mut NamePool) {
@@ -342,10 +338,7 @@ impl Party {
                     return;
                 }
 
-                let choice = match input.parse::<usize>() {
-                    Ok(choice) => choice,
-                    Err(_) => 0,
-                };
+                let choice = input.parse::<usize>().unwrap_or(0);
 
                 if choice > 0 && choice <= self.members.len() {
                     let member = self
@@ -442,13 +435,7 @@ impl Party {
             Some(location) if !tile.explored => location.handle(self, name_pool),
             // Normal Tile
             _ => {
-                let options = if time.night() {
-                    DEFAULT_NIGHT_OPTIONS
-                } else {
-                    DEFAULT_DAY_OPTIONS
-                };
-
-                // TODO: Location specific options
+                let options = tile.get_event_options(time);
                 Event::roll(options).handle(self, name_pool);
             }
         }

@@ -29,7 +29,7 @@ impl Time {
         self.hour += time;
         if self.hour > 23 {
             self.day += self.hour / 24;
-            self.hour = self.hour % 24;
+            self.hour %= 24;
         }
     }
 

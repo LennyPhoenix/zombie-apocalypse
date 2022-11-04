@@ -149,10 +149,7 @@ fn trade_well(party: &mut Party) {
         flush();
 
         let input = read_line();
-        let amount = match input.trim().parse::<i32>() {
-            Ok(amount) => amount,
-            Err(_) => -1,
-        };
+        let amount = input.trim().parse::<i32>().unwrap_or(-1);
 
         if amount < 0 || amount > party.money {
             println!("Invalid choice.");
@@ -227,10 +224,7 @@ fn shopping_centre(party: &mut Party, name_pool: &mut NamePool) {
 
         let input = read_line();
 
-        let amount = match input.trim().parse::<i32>() {
-            Ok(amount) => amount,
-            Err(_) => -1,
-        };
+        let amount = input.trim().parse::<i32>().unwrap_or(-1);
 
         if amount == 0 {
             print!("You leave the machine");

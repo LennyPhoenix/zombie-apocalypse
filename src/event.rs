@@ -18,26 +18,6 @@ pub enum Event {
     Nothing,
 }
 
-pub const DEFAULT_DAY_OPTIONS: &[Event] = &[
-    Event::Zombie(4),
-    Event::Zombie(4),
-    Event::Zombie(4),
-    Event::Food(3),
-    Event::Food(3),
-    Event::Money(3),
-    Event::Money(3),
-    Event::Ammo(2),
-    Event::Fuel(2),
-    Event::Survivor(2),
-];
-
-pub const DEFAULT_NIGHT_OPTIONS: &[Event] = &[
-    Event::Zombie(5),
-    Event::Zombie(5),
-    Event::Nothing,
-    Event::Fuel(1),
-];
-
 impl Event {
     pub fn roll(options: &[Event]) -> Self {
         let mut rng = thread_rng();
